@@ -77,6 +77,7 @@ function updateControls() {
   const totalSteps = state.stepsPayload?.steps.length ?? 0;
   const atEnd = totalSteps === 0 || state.stepIndex >= totalSteps - 1;
 
+  document.body.classList.toggle("is-playing", state.isPlaying);
   elements.startBtn.disabled = state.isPlaying || atEnd;
   elements.pauseBtn.disabled = !state.isPlaying;
   elements.nextBtn.disabled = state.isPlaying || atEnd;

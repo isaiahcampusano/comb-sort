@@ -27,6 +27,7 @@
   --radius-sm: 6px;
   --radius-md: 12px;
   --transition: 220ms ease;
+  --motion-enter: 520ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 *,
@@ -150,6 +151,7 @@ table {
   font-size: clamp(2.8rem, 7vw, 5rem);
   line-height: 0.98;
   text-transform: uppercase;
+  animation: rise-in var(--motion-enter) 80ms both;
 }
 
 .lede {
@@ -158,6 +160,7 @@ table {
   font-family: "Merriweather", Georgia, serif;
   font-size: 1.05rem;
   color: var(--sanford);
+  animation: rise-in var(--motion-enter) 150ms both;
 }
 
 .hero-card {
@@ -165,6 +168,7 @@ table {
   background: var(--chapel-bell-white);
   box-shadow: var(--shadow);
   padding: 1.2rem;
+  animation: rise-in var(--motion-enter) 180ms both;
 }
 
 .hero-card__grid {
@@ -194,14 +198,12 @@ table {
 }
 
 .lab,
-.results-section,
-.explainers {
+.results-section {
   margin-top: 1.5rem;
 }
 
 .lab__heading,
-.results-section__intro,
-.explainers__header {
+.results-section__intro {
   display: flex;
   justify-content: space-between;
   gap: 1.5rem;
@@ -209,8 +211,7 @@ table {
 }
 
 .lab__heading h2,
-.results-section h2,
-.explainers h2 {
+.results-section h2 {
   font-size: clamp(1.8rem, 3vw, 2.6rem);
   text-transform: uppercase;
 }
@@ -244,8 +245,7 @@ table {
 .controls-panel,
 .sequence-panel,
 .step-callout,
-.results-section,
-.explainers {
+.results-section {
   background: var(--chapel-bell-white);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
@@ -260,6 +260,7 @@ table {
 
 .controls-panel {
   margin-top: 1rem;
+  animation: rise-in var(--motion-enter) 260ms both;
 }
 
 .controls-row {
@@ -287,11 +288,21 @@ table {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   cursor: pointer;
-  transition: transform var(--transition), background var(--transition), color var(--transition);
+  transition:
+    transform var(--transition),
+    background var(--transition),
+    color var(--transition),
+    box-shadow var(--transition);
 }
 
 .btn:hover:not(:disabled) {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.16);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .btn:disabled {
@@ -330,6 +341,7 @@ input[type="range"] {
 
 .sequence-panel {
   margin-top: 1rem;
+  animation: rise-in var(--motion-enter) 330ms both;
 }
 
 .sequence-panel__header {
@@ -356,20 +368,55 @@ input[type="range"] {
   background: var(--paper);
   font-size: 0.9rem;
   font-weight: 700;
+  animation: chip-settle 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition:
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition),
+    transform var(--transition);
+}
+
+.sequence-chip:nth-child(2n) {
+  animation-delay: 18ms;
+}
+
+.sequence-chip:nth-child(3n) {
+  animation-delay: 36ms;
 }
 
 .sequence-chip.is-comparing {
   background: var(--bulldog-red);
   border-color: var(--bulldog-red);
   color: var(--chapel-bell-white);
+  animation: chip-compare 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .stage-panel {
+  position: relative;
+  overflow: hidden;
   margin-top: 1rem;
   padding: 1rem 1rem 1.15rem;
   background: var(--arch-black);
   color: var(--chapel-bell-white);
   box-shadow: var(--shadow);
+  animation: rise-in var(--motion-enter) 400ms both;
+}
+
+.stage-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 32%;
+  height: 3px;
+  background: var(--bulldog-red);
+  opacity: 0;
+  transform: translateX(-110%);
+}
+
+.is-playing .stage-panel::before {
+  opacity: 1;
+  animation: stage-scan 1.15s linear infinite;
 }
 
 .stage-panel__top {
@@ -439,6 +486,15 @@ input[type="range"] {
   flex-direction: column;
   gap: 0.6rem;
   min-width: 0;
+  animation: column-settle 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chart-column:nth-child(2n) {
+  animation-delay: 15ms;
+}
+
+.chart-column:nth-child(3n) {
+  animation-delay: 30ms;
 }
 
 .chart-column__meter {
@@ -467,20 +523,29 @@ input[type="range"] {
 .chart-column__bar {
   width: min(100%, 28px);
   background: var(--chapel-bell-white);
+  transform-origin: bottom center;
+  animation: bar-grow 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
   transition: height 240ms ease, background 160ms ease, outline-color 160ms ease;
 }
 
 .chart-column__bar--negative {
   align-self: start;
+  transform-origin: top center;
 }
 
 .chart-column.is-comparing .chart-column__bar {
   background: var(--bulldog-red);
+  animation:
+    bar-grow 260ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    compare-pulse 520ms ease-out 120ms both;
 }
 
 .chart-column.is-swapping .chart-column__bar {
   outline: 2px solid var(--creamery);
   outline-offset: 2px;
+  animation:
+    bar-grow 260ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    swap-flash 600ms ease-out 100ms both;
 }
 
 .chart-column__label {
@@ -503,6 +568,7 @@ input[type="range"] {
 
 .step-callout {
   margin-top: 1rem;
+  animation: rise-in var(--motion-enter) 470ms both;
 }
 
 .step-callout p {
@@ -521,6 +587,7 @@ input[type="range"] {
 
 .results-section {
   margin-top: 1.5rem;
+  animation: rise-in var(--motion-enter) 540ms both;
 }
 
 .table-scroll {
@@ -565,6 +632,30 @@ input[type="range"] {
   background: #faf8f4;
 }
 
+#results-table tbody tr {
+  animation: row-reveal 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+#results-table tbody tr:nth-child(2) {
+  animation-delay: 35ms;
+}
+
+#results-table tbody tr:nth-child(3) {
+  animation-delay: 70ms;
+}
+
+#results-table tbody tr:nth-child(4) {
+  animation-delay: 105ms;
+}
+
+#results-table tbody tr:nth-child(5) {
+  animation-delay: 140ms;
+}
+
+#results-table tbody tr:nth-child(n + 6) {
+  animation-delay: 175ms;
+}
+
 #results-table td.return-positive {
   color: var(--arch-black);
   font-weight: 700;
@@ -573,33 +664,6 @@ input[type="range"] {
 #results-table td.return-negative {
   color: var(--bulldog-red);
   font-weight: 700;
-}
-
-.explainers {
-  padding: 1.2rem;
-}
-
-.explainer-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.explainer-card {
-  border: 1px solid var(--line);
-  padding: 1rem;
-  background: linear-gradient(180deg, #ffffff 0%, #faf7f1 100%);
-}
-
-.explainer-card h3 {
-  font-size: 1.25rem;
-  text-transform: uppercase;
-  margin-bottom: 0.45rem;
-}
-
-.explainer-card p {
-  color: var(--sanford);
 }
 
 .site-footer {
@@ -614,11 +678,110 @@ input[type="range"] {
   margin-top: 0.4rem;
 }
 
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chip-settle {
+  from {
+    opacity: 0.35;
+    transform: translateY(5px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes chip-compare {
+  0% {
+    transform: scale(0.94);
+  }
+  55% {
+    transform: translateY(-3px) scale(1.08);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes column-settle {
+  from {
+    opacity: 0.55;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bar-grow {
+  from {
+    opacity: 0.4;
+    transform: scaleY(0.68);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes compare-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+    transform: scaleX(1);
+  }
+  45% {
+    filter: brightness(1.32);
+    transform: scaleX(1.18);
+  }
+}
+
+@keyframes swap-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(214, 210, 196, 0);
+    transform: scaleX(1);
+  }
+  45% {
+    box-shadow: 0 0 20px rgba(214, 210, 196, 0.72);
+    transform: scaleX(1.18);
+  }
+}
+
+@keyframes stage-scan {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(420%);
+  }
+}
+
+@keyframes row-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @media (max-width: 960px) {
   .masthead__hero,
   .lab__heading,
-  .results-section__intro,
-  .explainers__header {
+  .results-section__intro {
     grid-template-columns: 1fr;
     display: grid;
     align-items: start;
@@ -631,10 +794,6 @@ input[type="range"] {
 
   .chart {
     grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
-  }
-
-  .explainer-grid {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -668,6 +827,7 @@ input[type="range"] {
   *,
   *::before,
   *::after {
+    animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
   }

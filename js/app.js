@@ -13,20 +13,24 @@ const state = {
   reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
 };
 
-const speedDelays = {
-  1: 1600,
-  2: 1050,
-  3: 700,
-  4: 400,
-  5: 180,
+const speedLabels = {
+  1: { label: "Slow study", delay: 1600 },
+  2: { label: "Measured", delay: 1050 },
+  3: { label: "Steady", delay: 700 },
+  4: { label: "Quick", delay: 400 },
+  5: { label: "Fast review", delay: 180 },
 };
 
 const elements = {
-  tickerTrack: document.getElementById("ticker-tape-track"),
   chart: document.getElementById("chart"),
+  sequenceTrack: document.getElementById("sequence-track"),
   stepText: document.getElementById("step-text"),
-  resultsPanel: document.getElementById("results-panel"),
   resultsBody: document.getElementById("results-body"),
+  resultsNote: document.getElementById("results-note"),
+  stageStatus: document.getElementById("stage-status"),
+  stageSpeed: document.getElementById("stage-speed"),
+  metaSource: document.getElementById("meta-source"),
+  metaGenerated: document.getElementById("meta-generated"),
   startBtn: document.getElementById("start-btn"),
   pauseBtn: document.getElementById("pause-btn"),
   nextBtn: document.getElementById("next-btn"),
@@ -36,10 +40,10 @@ const elements = {
   statItems: document.getElementById("stat-items"),
   statComparisons: document.getElementById("stat-comparisons"),
   statSwaps: document.getElementById("stat-swaps"),
-  statInitialGap: document.getElementById("stat-initial-gap"),
   statCurrentGap: document.getElementById("stat-current-gap"),
   statSteps: document.getElementById("stat-steps"),
   statTime: document.getElementById("stat-time"),
+  statProgress: document.getElementById("stat-progress"),
 };
 
 const formatPct = new Intl.NumberFormat("en-US", {
@@ -69,10 +73,6 @@ function getChartRecords() {
   return state.currentOrder.map((ticker) => state.recordsByTicker.get(ticker)).filter(Boolean);
 }
 
-function getMaxMagnitude() {
-  return getChartRecords().reduce((max, record) => Math.max(max, Math.abs(record.return_pct)), 0) || 1;
-}
-
 function updateControls() {
   const totalSteps = state.stepsPayload?.steps.length ?? 0;
   const atEnd = totalSteps === 0 || state.stepIndex >= totalSteps - 1;
@@ -83,61 +83,96 @@ function updateControls() {
   elements.resetBtn.disabled = false;
 }
 
-function renderTickerTape() {
-  const items = state.initialOrder.map((ticker) => {
-    const record = state.recordsByTicker.get(ticker);
-    const directionClass = record.return_pct >= 0 ? "is-positive" : "is-negative";
-    const sign = record.return_pct >= 0 ? "+" : "";
-    return `
-      <span class="ticker-tape__item ${directionClass}">
-        <span class="ticker-tape__symbol">${record.ticker}</span>
-        <span class="ticker-tape__change">${sign}${formatPct.format(record.return_pct)}%</span>
-      </span>
-    `;
-  });
+function formatGeneratedDate(rawValue) {
+  if (!rawValue || rawValue === "fixture") {
+    return "Fixture dataset";
+  }
 
-  elements.tickerTrack.innerHTML = items.concat(items).join("");
+  const date = new Date(rawValue);
+  if (Number.isNaN(date.getTime())) {
+    return rawValue;
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(date);
+}
+
+function renderMetadata() {
+  const metadata = state.stocksPayload?.metadata;
+  if (!metadata) {
+    return;
+  }
+
+  elements.metaSource.textContent = metadata.source;
+  elements.metaGenerated.textContent = formatGeneratedDate(metadata.generated_at);
+}
+
+function renderSequence() {
+  const currentStep = getCurrentStep();
+  const activeTickers = currentStep
+    ? new Set([currentStep.left_ticker, currentStep.right_ticker])
+    : new Set();
+
+  elements.sequenceTrack.innerHTML = state.currentOrder
+    .map((ticker) => {
+      const classes = ["sequence-chip"];
+      if (activeTickers.has(ticker)) {
+        classes.push("is-comparing");
+      }
+
+      return `<span class="${classes.join(" ")}">${ticker}</span>`;
+    })
+    .join("");
 }
 
 function renderChart() {
+  const records = getChartRecords();
   const currentStep = getCurrentStep();
-  const comparingIndexes = currentStep ? new Set([currentStep.left_index, currentStep.right_index]) : new Set();
-  const maxMagnitude = getMaxMagnitude();
+  const activeTickers = currentStep
+    ? new Set([currentStep.left_ticker, currentStep.right_ticker])
+    : new Set();
+  const positiveMax = Math.max(...records.map((record) => Math.max(record.return_pct, 0)), 0);
+  const negativeMax = Math.max(...records.map((record) => Math.max(-record.return_pct, 0)), 0);
+  const totalMagnitude = positiveMax + negativeMax || 1;
+  const positiveZone = positiveMax > 0 ? (positiveMax / totalMagnitude) * 100 : 50;
+  const negativeZone = 100 - positiveZone;
 
-  elements.chart.innerHTML = getChartRecords()
-    .map((record, index) => {
-      const magnitude = Math.abs(record.return_pct) / maxMagnitude;
-      const widthPercent = Math.max(4, magnitude * 50);
-      const positive = record.return_pct >= 0;
-      const barClass = positive ? "bar-row__bar bar-row__bar--positive" : "bar-row__bar bar-row__bar--negative";
-      const barStyle = positive ? `width:${widthPercent}%;` : `width:${widthPercent}%;`;
-      const valuePosition = positive
-        ? `left: calc(50% + min(${widthPercent}%, 42%) + 8px);`
-        : `right: calc(50% + min(${widthPercent}%, 42%) + 8px);`;
+  elements.chart.innerHTML = records
+    .map((record) => {
+      const isPositive = record.return_pct >= 0;
+      const positiveHeight = positiveMax > 0 && isPositive ? (record.return_pct / positiveMax) * 100 : 0;
+      const negativeHeight = negativeMax > 0 && !isPositive ? (Math.abs(record.return_pct) / negativeMax) * 100 : 0;
+      const classes = ["chart-column"];
 
-      const classes = ["bar-row"];
-      if (comparingIndexes.has(index)) {
+      if (activeTickers.has(record.ticker)) {
         classes.push("is-comparing");
       }
-      if (currentStep?.swapped && comparingIndexes.has(index)) {
+
+      if (currentStep?.swapped && activeTickers.has(record.ticker)) {
         classes.push("is-swapping");
       }
-      if (state.stepIndex === (state.stepsPayload?.steps.length ?? 0) - 1) {
-        classes.push("is-sorted");
-      }
+
+      const sign = record.return_pct >= 0 ? "+" : "";
 
       return `
-        <div class="${classes.join(" ")}" data-ticker="${record.ticker}">
-          <div class="bar-row__label">
-            <span class="bar-row__ticker">${record.ticker}</span>
-            <span class="bar-row__company">${record.company}</span>
+        <div class="${classes.join(" ")}">
+          <div class="chart-column__meter">
+            <div class="chart-column__zone chart-column__zone--positive" style="height:${positiveZone}%;">
+              ${isPositive ? `<span class="chart-column__bar" style="height:${positiveHeight}%"></span>` : ""}
+            </div>
+            <div class="chart-column__zone chart-column__zone--negative" style="height:${negativeZone}%;">
+              ${!isPositive ? `<span class="chart-column__bar chart-column__bar--negative" style="height:${negativeHeight}%"></span>` : ""}
+            </div>
           </div>
-          <div class="bar-row__track" title="${record.company} (${record.sector})">
-            <span class="bar-row__zero" aria-hidden="true"></span>
-            <span class="${barClass}" style="${barStyle}"></span>
-            <span class="bar-row__value" style="${valuePosition}">
-              ${record.return_pct >= 0 ? "+" : ""}${formatPct.format(record.return_pct)}%
-            </span>
+          <div class="chart-column__label">
+            <span class="chart-column__ticker">${record.ticker}</span>
+            <span class="chart-column__value">${sign}${formatPct.format(record.return_pct)}%</span>
           </div>
         </div>
       `;
@@ -152,8 +187,8 @@ function renderResults() {
   elements.resultsBody.innerHTML = displayResults
     .map((record, index) => {
       const rank = state.reverseFinalView ? displayResults.length - index : index + 1;
-      const returnClass = record.return_pct >= 0 ? "return-positive" : "return-negative";
       const sign = record.return_pct >= 0 ? "+" : "";
+      const returnClass = record.return_pct >= 0 ? "return-positive" : "return-negative";
       return `
         <tr>
           <td class="num">${rank}</td>
@@ -176,57 +211,101 @@ function renderStats() {
     return;
   }
 
+  const totalSteps = state.stepsPayload?.steps.length ?? 0;
+  const completedSteps = currentStep ? currentStep.step : 0;
+  const progressPct = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+
   elements.statItems.textContent = String(stats.item_count);
   elements.statComparisons.textContent = String(stats.comparisons);
   elements.statSwaps.textContent = String(stats.swaps);
-  elements.statInitialGap.textContent = String(stats.initial_gap);
   elements.statCurrentGap.textContent = currentStep ? String(currentStep.gap) : String(stats.initial_gap);
-  elements.statSteps.textContent = String(state.stepsPayload?.steps.length ?? 0);
+  elements.statSteps.textContent = String(totalSteps);
   elements.statTime.textContent = `${stats.execution_time_ms} ms`;
+  elements.statProgress.textContent = `${progressPct}%`;
+}
+
+function renderStatusLine() {
+  const stats = getStats();
+  const currentStep = getCurrentStep();
+  const speed = speedLabels[state.speedValue]?.label ?? "Steady";
+
+  if (!stats) {
+    elements.stageStatus.textContent = "Loading prepared stock data...";
+    return;
+  }
+
+  if (!currentStep) {
+    elements.stageStatus.textContent =
+      `Comb Sort | ${stats.item_count} stocks | ${state.stepsPayload.steps.length} recorded steps | waiting to start`;
+    return;
+  }
+
+  elements.stageStatus.textContent =
+    `Comb Sort | step ${currentStep.step}/${state.stepsPayload.steps.length} | gap ${currentStep.gap} | ` +
+    `${stats.comparisons} total comparisons | speed ${speed.toLowerCase()}`;
 }
 
 function describeStep() {
   const currentStep = getCurrentStep();
+
   if (!currentStep) {
     elements.stepText.innerHTML =
-      "Gap: not started. The chart is showing the original unsorted ticker order.<span class=\"step-count\">Use Start sort or Next step to replay the recorded comparisons.</span>";
+      `Gap: not started. The bars and chips are still showing the original unsorted order.` +
+      `<span class="step-count">Press Start sort or Next step to begin the replay.</span>`;
     return;
   }
 
   const leftRecord = state.recordsByTicker.get(currentStep.left_ticker);
   const rightRecord = state.recordsByTicker.get(currentStep.right_ticker);
   const outcome = currentStep.swapped
-    ? `${currentStep.left_ticker} moved behind ${currentStep.right_ticker} because it had the lower return.`
-    : `No swap was needed because ${currentStep.left_ticker} was already ordered correctly relative to ${currentStep.right_ticker}.`;
+    ? `${leftRecord.ticker} moved behind ${rightRecord.ticker} because its return was lower.`
+    : `${leftRecord.ticker} stayed ahead because it was already in the correct order relative to ${rightRecord.ticker}.`;
 
-  elements.stepText.innerHTML = `Gap: ${currentStep.gap}. Comparing ${leftRecord.ticker} at index ${currentStep.left_index} with ${rightRecord.ticker} at index ${currentStep.right_index}. ${outcome}<span class="step-count">Step ${currentStep.step} of ${state.stepsPayload.steps.length}</span>`;
+  elements.stepText.innerHTML =
+    `Gap ${currentStep.gap}: comparing ${leftRecord.ticker} (${formatPct.format(leftRecord.return_pct)}%) ` +
+    `with ${rightRecord.ticker} (${formatPct.format(rightRecord.return_pct)}%). ${outcome}` +
+    `<span class="step-count">Step ${currentStep.step} of ${state.stepsPayload.steps.length}</span>`;
 }
 
-function showResultsIfFinished() {
+function renderResultsNote() {
   const totalSteps = state.stepsPayload?.steps.length ?? 0;
   const finished = totalSteps > 0 && state.stepIndex >= totalSteps - 1;
-  elements.resultsPanel.hidden = !finished;
+
+  elements.resultsNote.textContent = finished
+    ? "Replay complete. The stage order and the table below now match the final Python output."
+    : "This table is the authoritative sorted result written by the Python pipeline.";
 }
 
 function syncView() {
+  renderMetadata();
+  renderSequence();
   renderChart();
   renderResults();
   renderStats();
+  renderStatusLine();
+  renderResultsNote();
   describeStep();
-  showResultsIfFinished();
+  updateControls();
+}
+
+function stopPlayback() {
+  state.isPlaying = false;
+  if (state.timerId !== null) {
+    window.clearTimeout(state.timerId);
+    state.timerId = null;
+  }
   updateControls();
 }
 
 function resetPlayback() {
+  stopPlayback();
   state.stepIndex = -1;
   state.currentOrder = [...state.initialOrder];
-  stopPlayback();
   syncView();
 }
 
 function applyStep(stepIndex) {
-  const steps = state.stepsPayload?.steps ?? [];
-  const step = steps[stepIndex];
+  const step = state.stepsPayload?.steps?.[stepIndex];
   if (!step) {
     return false;
   }
@@ -238,8 +317,7 @@ function applyStep(stepIndex) {
 }
 
 function advanceStep() {
-  const nextIndex = state.stepIndex + 1;
-  const didAdvance = applyStep(nextIndex);
+  const didAdvance = applyStep(state.stepIndex + 1);
   if (!didAdvance) {
     stopPlayback();
   }
@@ -250,7 +328,7 @@ function getStepDelay() {
   if (state.reducedMotion) {
     return 0;
   }
-  return speedDelays[state.speedValue] ?? speedDelays[3];
+  return speedLabels[state.speedValue]?.delay ?? speedLabels[3].delay;
 }
 
 function playbackTick() {
@@ -258,10 +336,12 @@ function playbackTick() {
   if (!advanced) {
     return;
   }
-  if (state.stepIndex >= (state.stepsPayload.steps.length - 1)) {
+
+  if (state.stepIndex >= state.stepsPayload.steps.length - 1) {
     stopPlayback();
     return;
   }
+
   state.timerId = window.setTimeout(playbackTick, getStepDelay());
 }
 
@@ -274,13 +354,9 @@ function startPlayback() {
   playbackTick();
 }
 
-function stopPlayback() {
-  state.isPlaying = false;
-  if (state.timerId !== null) {
-    window.clearTimeout(state.timerId);
-    state.timerId = null;
-  }
-  updateControls();
+function updateSpeedReadout() {
+  const speed = speedLabels[state.speedValue]?.label ?? "Steady";
+  elements.stageSpeed.textContent = `Speed: ${speed.toLowerCase()}`;
 }
 
 function attachEvents() {
@@ -293,6 +369,8 @@ function attachEvents() {
   elements.resetBtn.addEventListener("click", resetPlayback);
   elements.speedRange.addEventListener("input", (event) => {
     state.speedValue = Number(event.target.value);
+    updateSpeedReadout();
+    renderStatusLine();
   });
   elements.ascendingToggle.addEventListener("change", (event) => {
     state.reverseFinalView = event.target.checked;
@@ -323,13 +401,13 @@ async function bootstrap() {
     state.currentOrder = [...state.initialOrder];
     state.recordsByTicker = new Map(stocksPayload.stocks.map((stock) => [stock.ticker, stock]));
 
-    renderTickerTape();
     attachEvents();
+    updateSpeedReadout();
     syncView();
   } catch (error) {
+    elements.stageStatus.textContent = `Unable to load prepared data: ${error.message}`;
     elements.stepText.textContent = `Unable to load prepared data: ${error.message}`;
   }
 }
 
 bootstrap();
-

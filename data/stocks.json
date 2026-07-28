@@ -1,0 +1,162 @@
+{
+  "metadata": {
+    "source": "Alpha Vantage TIME_SERIES_DAILY",
+    "metric": "30-trading-day percentage return",
+    "generated_at": "2026-07-28T12:26:17Z",
+    "sort_direction": "descending",
+    "disclaimer": "Educational demonstration only; not investment advice.",
+    "warnings": []
+  },
+  "stocks": [
+    {
+      "ticker": "DAL",
+      "company": "Delta Air Lines",
+      "sector": "Industrials",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 61.2,
+      "end_close": 56.55,
+      "return_pct": -7.598039
+    },
+    {
+      "ticker": "COST",
+      "company": "Costco",
+      "sector": "Consumer Staples",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 930.1,
+      "end_close": 954.84,
+      "return_pct": 2.659929
+    },
+    {
+      "ticker": "NVDA",
+      "company": "NVIDIA",
+      "sector": "Technology",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 138.42,
+      "end_close": 153.7,
+      "return_pct": 11.038867
+    },
+    {
+      "ticker": "KO",
+      "company": "Coca-Cola",
+      "sector": "Consumer Staples",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 62.18,
+      "end_close": 63.05,
+      "return_pct": 1.399164
+    },
+    {
+      "ticker": "PLTR",
+      "company": "Palantir Technologies",
+      "sector": "Technology",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 74.66,
+      "end_close": 82.91,
+      "return_pct": 11.050094
+    },
+    {
+      "ticker": "WMT",
+      "company": "Walmart",
+      "sector": "Consumer Staples",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 91.45,
+      "end_close": 96.3,
+      "return_pct": 5.303445
+    },
+    {
+      "ticker": "DIS",
+      "company": "Walt Disney",
+      "sector": "Communication Services",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 111.7,
+      "end_close": 107.25,
+      "return_pct": -3.983886
+    },
+    {
+      "ticker": "AAPL",
+      "company": "Apple",
+      "sector": "Technology",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 243.11,
+      "end_close": 248.76,
+      "return_pct": 2.324051
+    },
+    {
+      "ticker": "JPM",
+      "company": "JPMorgan Chase",
+      "sector": "Financials",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 241.8,
+      "end_close": 252.65,
+      "return_pct": 4.48718
+    },
+    {
+      "ticker": "LULU",
+      "company": "Lululemon Athletica",
+      "sector": "Consumer Discretionary",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 322.4,
+      "end_close": 294.75,
+      "return_pct": -8.576303
+    },
+    {
+      "ticker": "META",
+      "company": "Meta Platforms",
+      "sector": "Communication Services",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 603.52,
+      "end_close": 626.88,
+      "return_pct": 3.870626
+    },
+    {
+      "ticker": "V",
+      "company": "Visa",
+      "sector": "Financials",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 316.3,
+      "end_close": 325.5,
+      "return_pct": 2.908631
+    },
+    {
+      "ticker": "AMZN",
+      "company": "Amazon",
+      "sector": "Consumer Discretionary",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 219.39,
+      "end_close": 227.1,
+      "return_pct": 3.514289
+    },
+    {
+      "ticker": "GOOGL",
+      "company": "Alphabet",
+      "sector": "Communication Services",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 189.82,
+      "end_close": 185.44,
+      "return_pct": -2.307449
+    },
+    {
+      "ticker": "MSFT",
+      "company": "Microsoft",
+      "sector": "Technology",
+      "start_date": "2026-01-02",
+      "end_date": "2026-02-13",
+      "start_close": 421.5,
+      "end_close": 438.9,
+      "return_pct": 4.128114
+    }
+  ]
+}
